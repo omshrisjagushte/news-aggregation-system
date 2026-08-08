@@ -12,4 +12,4 @@ WORKDIR /app
 RUN npm i -g serve
 COPY --from=build /app/dist ./dist
 EXPOSE $PORT
-CMD ["serve", "-s", "dist", "-l", "$PORT"]
+CMD sh -c "serve -s dist -I $PORT"
