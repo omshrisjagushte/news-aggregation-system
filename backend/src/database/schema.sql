@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- RSS Feeds table
 CREATE TABLE IF NOT EXISTS rss_feeds (
   id SERIAL PRIMARY KEY,
-  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL DEFAULT 1 REFERENCES users(id) ON DELETE CASCADE,
   title VARCHAR(255) NOT NULL,
   url VARCHAR(500) NOT NULL,
   description TEXT,
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS rss_feeds (
 -- Categories table
 CREATE TABLE IF NOT EXISTS categories (
   id SERIAL PRIMARY KEY,
-  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL DEFAULT 1 REFERENCES users(id) ON DELETE CASCADE,
   name VARCHAR(255) NOT NULL,
   description TEXT,
   color VARCHAR(7),
@@ -45,23 +45,23 @@ CREATE TABLE IF NOT EXISTS categories (
 -- Articles table
 CREATE TABLE IF NOT EXISTS articles (
   id SERIAL PRIMARY KEY,
-  feed_id INTEGER NOT NULL REFERENCES rss_feeds(id) ON DELETE CASCADE,
+  feed_id INTEGER REFERENCES rss_feeds(id) ON DELETE CASCADE,
   title VARCHAR(500) NOT NULL,
   description TEXT,
   content TEXT,
   author VARCHAR(255),
   image_url VARCHAR(500),
-  source_url VARCHAR(500) UNIQUE NOT NULL,
+  source_url VARCHAR(500) UNIQUE,
   published_at TIMESTAMP,
   fetched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- User bookmarks table
+-- Bookmarks table
 CREATE TABLE IF NOT EXISTS bookmarks (
   id SERIAL PRIMARY KEY,
-  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL DEFAULT 1 REFERENCES users(id) ON DELETE CASCADE,
+  article_id INTEGER REFERENCES articles(id) ON DELETE CASCADE,
   read BOOLEAN DEFAULT false,
   read_at TIMESTAMP,
   bookmarked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -71,13 +71,13 @@ CREATE TABLE IF NOT EXISTS bookmarks (
 -- Tags table
 CREATE TABLE IF NOT EXISTS tags (
   id SERIAL PRIMARY KEY,
-  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL DEFAULT 1 REFERENCES users(id) ON DELETE CASCADE,
   name VARCHAR(100) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(user_id, name)
 );
 
--- Article tags (many-to-many)
+-- Article tags junction table
 CREATE TABLE IF NOT EXISTS article_tags (
   id SERIAL PRIMARY KEY,
   article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS article_tags (
 -- Search history table
 CREATE TABLE IF NOT EXISTS search_history (
   id SERIAL PRIMARY KEY,
-  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL DEFAULT 1 REFERENCES users(id) ON DELETE CASCADE,
   query VARCHAR(500) NOT NULL,
   results_count INTEGER,
   searched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS search_history (
 -- User preferences table
 CREATE TABLE IF NOT EXISTS user_preferences (
   id SERIAL PRIMARY KEY,
-  user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL UNIQUE DEFAULT 1 REFERENCES users(id) ON DELETE CASCADE,
   items_per_page INTEGER DEFAULT 20,
   sort_by VARCHAR(50) DEFAULT 'date_desc',
   auto_fetch_enabled BOOLEAN DEFAULT true,
@@ -106,12 +106,10 @@ CREATE TABLE IF NOT EXISTS user_preferences (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create indexes for better performance
-CREATE INDEX idx_articles_feed_id ON articles(feed_id);
-CREATE INDEX idx_articles_published ON articles(published_at DESC);
-CREATE INDEX idx_bookmarks_user_id ON bookmarks(user_id);
-CREATE INDEX idx_feeds_user_id ON rss_feeds(user_id);
-CREATE INDEX idx_categories_user_id ON categories(user_id);
-CREATE INDEX idx_search_history_user_id ON search_history(user_id);
-CREATE INDEX idx_article_tags_article_id ON article_tags(article_id);
-CREATE INDEX idx_article_tags_tag_id ON article_tags(tag_id);
+-- Create indexes
+CREATE INDEX IF NOT EXISTS idx_articles_feed_id ON articles(feed_id);
+CREATE INDEX IF NOT EXISTS idx_articles_published ON articles(published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_bookmarks_user_id ON bookmarks(user_id);
+CREATE INDEX IF NOT EXISTS idx_feeds_user_id ON rss_feeds(user_id);
+CREATE INDEX IF NOT EXISTS idx_categories_user_id ON categories(user_id);
+CREATE INDEX IF NOT EXISTS idx_search_history_user_id ON search_history(user_id);

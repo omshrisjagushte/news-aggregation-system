@@ -1,75 +1,77 @@
 import express from 'express';
-import { authenticate } from '../middleware/auth.js';
-import { Article } from '../models/Article.js';
-import { Bookmark } from '../models/Bookmark.js';
+import { authMiddleware } from '../middleware/auth.js';
+import { AppError } from '../middleware/errorHandler.js';
 
 const router = express.Router();
 
-// Get articles (paginated)
-router.get('/', authenticate, async (req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
-    const { page = 1, limit = 20 } = req.query;
-    const offset = (page - 1) * limit;
+    const limit = Math.min(parseInt(req.query.limit) || 50, 100);
+    const offset = parseInt(req.query.offset) || 0;
     
-    res.json({ message: 'Get articles', page, limit });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Search articles
-router.get('/search', authenticate, async (req, res, next) => {
-  try {
-    const { q, page = 1, limit = 20 } = req.query;
+    const result = await global.pool.query(
+      'SELECT * FROM articles ORDER BY published_at DESC LIMIT $1 OFFSET $2',
+      [limit, offset]
+    );
     
-    if (!q) {
-      return res.status(400).json({ error: 'Search query required' });
-    }
-
-    const offset = (page - 1) * limit;
-    const results = await Article.search(req.user.id, q, limit, offset);
-
-    res.json({
-      query: q,
-      results,
-      page,
-      limit,
+    res.json({ 
+      success: true,
+      articles: result.rows,
+      total: result.rows.length
     });
   } catch (error) {
     next(error);
   }
 });
 
-// Get article by ID
-router.get('/:id', authenticate, async (req, res, next) => {
+router.get('/search', async (req, res, next) => {
   try {
-    const article = await Article.getById(req.params.id);
+    const { q } = req.query;
     
-    if (!article) {
-      return res.status(404).json({ error: 'Article not found' });
+    if (!q || q.trim().length === 0) {
+      throw new AppError('Search query is required', 400);
     }
-
-    res.json(article);
+    
+    if (q.length > 200) {
+      throw new AppError('Search query is too long (max 200 characters)', 400);
+    }
+    
+    const result = await global.pool.query(
+      `SELECT * FROM articles WHERE title ILIKE $1 OR description ILIKE $1 ORDER BY published_at DESC LIMIT 50`,
+      [`%${q}%`]
+    );
+    
+    res.json({ 
+      success: true,
+      results: result.rows, 
+      query: q 
+    });
   } catch (error) {
     next(error);
   }
 });
 
-// Bookmark article
-router.post('/:id/bookmark', authenticate, async (req, res, next) => {
+router.get('/:id', async (req, res, next) => {
   try {
-    const bookmark = await Bookmark.create(req.user.id, req.params.id);
-    res.status(201).json({ message: 'Article bookmarked', bookmark });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Remove bookmark
-router.delete('/:id/bookmark', authenticate, async (req, res, next) => {
-  try {
-    await Bookmark.delete(req.user.id, req.params.id);
-    res.json({ message: 'Bookmark removed' });
+    const { id } = req.params;
+    
+    if (!id || isNaN(id)) {
+      throw new AppError('Invalid article ID', 400);
+    }
+    
+    const result = await global.pool.query(
+      'SELECT * FROM articles WHERE id = $1',
+      [id]
+    );
+    
+    if (result.rows.length === 0) {
+      throw new AppError('Article not found', 404);
+    }
+    
+    res.json({ 
+      success: true,
+      article: result.rows[0] 
+    });
   } catch (error) {
     next(error);
   }

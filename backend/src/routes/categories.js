@@ -1,51 +1,46 @@
 import express from 'express';
-import { authenticate } from '../middleware/auth.js';
-import { Category } from '../models/Category.js';
-import { categoryValidation, validate } from '../utils/validation.js';
+import { authMiddleware } from '../middleware/auth.js';
+import { AppError } from '../middleware/errorHandler.js';
 
 const router = express.Router();
 
-// Get all categories
-router.get('/', authenticate, async (req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
-    const categories = await Category.getByUserId(req.user.id);
-    res.json(categories);
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Create category
-router.post('/', authenticate, async (req, res, next) => {
-  try {
-    const data = validate(categoryValidation.create, req.body);
-    const category = await Category.create({
-      user_id: req.user.id,
-      ...data,
+    const result = await global.pool.query(
+      'SELECT * FROM categories LIMIT 100'
+    );
+    
+    res.json({ 
+      success: true,
+      categories: result.rows 
     });
-    res.status(201).json(category);
   } catch (error) {
     next(error);
   }
 });
 
-// Update category
-router.put('/:id', authenticate, async (req, res, next) => {
+router.post('/', authMiddleware, async (req, res, next) => {
   try {
-    const data = validate(categoryValidation.create, req.body);
-    const category = await Category.update(req.params.id, data);
-    res.json(category);
+    const { name, description, color } = req.body;
+    const userId = req.user.id;
+    
+    if (!name) {
+      throw new AppError('Category name is required', 400);
+    }
+    
+    const result = await global.pool.query(
+      'INSERT INTO categories (user_id, name, description, color, created_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING *',
+      [userId, name, description || '', color || '#000000']
+    );
+    
+    res.status(201).json({ 
+      success: true,
+      category: result.rows[0] 
+    });
   } catch (error) {
-    next(error);
-  }
-});
-
-// Delete category
-router.delete('/:id', authenticate, async (req, res, next) => {
-  try {
-    await Category.delete(req.params.id);
-    res.json({ message: 'Category deleted' });
-  } catch (error) {
+    if (error.message.includes('duplicate key')) {
+      return next(new AppError('Category name already exists', 409));
+    }
     next(error);
   }
 });
