@@ -1,0 +1,33 @@
+{
+  "name": "news-aggregation-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint . --ext .js,.jsx",
+    "preview": "vite preview",
+    "format": "prettier --write \"src/**/*.{js,jsx,css}\""
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.14.0",
+    "@reduxjs/toolkit": "^1.9.5",
+    "react-redux": "^8.1.2",
+    "axios": "^1.4.0",
+    "react-icons": "^4.10.1",
+    "dayjs": "^1.11.9",
+    "@headlessui/react": "^1.7.14"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.0.3",
+    "vite": "^4.4.5",
+    "tailwindcss": "^3.3.2",
+    "postcss": "^8.4.24",
+    "autoprefixer": "^10.4.14",
+    "eslint": "^8.45.0",
+    "prettier": "^2.8.8"
+  }
+}
