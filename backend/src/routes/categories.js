@@ -1,21 +1,53 @@
 import express from 'express';
+import { authenticate } from '../middleware/auth.js';
+import { Category } from '../models/Category.js';
+import { categoryValidation, validate } from '../utils/validation.js';
 
 const router = express.Router();
 
-router.get('/', (req, res) => {
-  res.json({ message: 'Get categories' });
+// Get all categories
+router.get('/', authenticate, async (req, res, next) => {
+  try {
+    const categories = await Category.getByUserId(req.user.id);
+    res.json(categories);
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.post('/', (req, res) => {
-  res.json({ message: 'Create category' });
+// Create category
+router.post('/', authenticate, async (req, res, next) => {
+  try {
+    const data = validate(categoryValidation.create, req.body);
+    const category = await Category.create({
+      user_id: req.user.id,
+      ...data,
+    });
+    res.status(201).json(category);
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.put('/:id', (req, res) => {
-  res.json({ message: 'Update category' });
+// Update category
+router.put('/:id', authenticate, async (req, res, next) => {
+  try {
+    const data = validate(categoryValidation.create, req.body);
+    const category = await Category.update(req.params.id, data);
+    res.json(category);
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.delete('/:id', (req, res) => {
-  res.json({ message: 'Delete category' });
+// Delete category
+router.delete('/:id', authenticate, async (req, res, next) => {
+  try {
+    await Category.delete(req.params.id);
+    res.json({ message: 'Category deleted' });
+  } catch (error) {
+    next(error);
+  }
 });
 
 export default router;
