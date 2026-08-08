@@ -5,7 +5,7 @@ COPY package*.json ./
 RUN npm install
 COPY frontend/.
 RUN npm run build
-RUN ls -la dist 
+
 
 # Serve stage  
 FROM node:18-alpine
