@@ -8,6 +8,8 @@ RUN npm install
 
 COPY src ./src
 
-EXPOSE 3000
+RUN npm run build
 
-CMD ["npm", "run", "build"] && ["npm", "run", "preview"]
+EXPOSE 5000
+
+CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "5000"]
