@@ -24,7 +24,7 @@
     "jsonwebtoken": "^9.0.0",
     "joi": "^17.9.2",
     "axios": "^1.4.0",
-    "feedparser": "^0.6.0",
+    "feedparser": "^2.2.10",
     "node-cron": "^3.0.2",
     "cors": "^2.8.5",
     "helmet": "^7.0.0",
