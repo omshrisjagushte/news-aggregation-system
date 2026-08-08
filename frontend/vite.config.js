@@ -9,7 +9,8 @@ export default defineConfig({
     strictPort: false
   },
   preview: {
-    port: 3000,
-    host: '0.0.0.0'
+    port: 5000,
+    host: '0.0.0.0',
+    allowedHosts: ['frontend-production-c2a9.up.railway.app']
   }
 })
